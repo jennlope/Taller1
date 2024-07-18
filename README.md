@@ -1,2 +1,2 @@
 # P1-AgroMerc
-this repository is designed to do a simple project in the EAFIT University 
+this repository is designed to do a EAFIT University´s student project 
