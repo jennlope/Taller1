@@ -1,17 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgroMerc</title>
-    <style>
-        .green-text {
-            color: green;
-        }
-    </style>
-</head>
-<body>
-    <h1>Welcome to AgroMerc, <span class="green-text">{{name}}</span></h1>
-    <h2>This is the full home page</h2>
-</body>
-</html>
+<div class ="container">
+    <form action="">
+        <div class="mb-3">
+            <label for="searchProduct" class="form-label">
+                search for product:
+            </label>
+            <input type="text" class="form-control" name="searchProduct"/>
+        </div>
+        <button type="submit" class="btn btn-primary">search</button>
+    </form>
+    <p>Searching for {{searchTerm}}</p>
+        {% for Agro in agros%}
+            <h2>{{ Agro.title }}</h2>
+            <h3>{{ Agro.description}}</h3>
+            <img src="{{ Agro.imagen.url }}">
+            {% if Agro.url %}
+                <a href="{{ Agro.url }}"> Product link </a>
+            {% endif %}
+        {% endfor %}
+    <br/>
+</div>
