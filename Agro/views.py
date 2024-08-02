@@ -5,15 +5,24 @@ from .models import Agro
 # Create your views here.
 
 def home(request):
-    #return HttpResponse('<h1>Welcome to AgroMerc</h1>')
-    #return render(request, 'home.html')
-    searchTerm = request.GET.get('searchProduct')
-    if searchTerm:
-        agros = Agro.objects.filter(title__icontains=searchTerm)
-    else:
-        agros = Agro.objects.all()
-    return render(request, 'home.html', {'searchTerm':searchTerm,'agros':agros})
+    search_term = request.GET.get('searchProduct', '')
+    category_filter = request.GET.get('category', 'Todos')
 
+    if category_filter == 'Todos':
+        agros = Agro.objects.filter(title__icontains=search_term)
+    else:
+        agros = Agro.objects.filter(title__icontains=search_term, category=category_filter)
+
+    categories = Agro.objects.values_list('category', flat=True).distinct()
+    categories = ['Todos'] + list(categories)  # Add "Todos" to the list of categories
+
+    context = {
+        'searchTerm': search_term,
+        'agros': agros,
+        'categories': categories,
+        'selected_category': category_filter,
+    }
+    return render(request, 'home.html', context)
 def about(request):
     #return HttpResponse('<h1>Welcome to About page</h1>')
     return render(request, 'about.html')
