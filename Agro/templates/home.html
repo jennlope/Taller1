@@ -1,3 +1,8 @@
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    rel="stylesheet">
+</head>
+
 <div class ="container">
     <form action="">
         <div class="mb-3">
@@ -8,14 +13,25 @@
         </div>
         <button type="submit" class="btn btn-primary">search</button>
     </form>
-    <p>Searching for {{searchTerm}}</p>
+    <p>Searching for {{ searchTerm }}</p>
+    <div class="row row-cols-1 row-cols-md-3 g-4">
         {% for Agro in agros%}
-            <h2>{{ Agro.title }}</h2>
-            <h3>{{ Agro.description}}</h3>
-            <img src="{{ Agro.imagen.url }}">
-            {% if Agro.url %}
-                <a href="{{ Agro.url }}"> Product link </a>
-            {% endif %}
+            <div v-for="Product in products" class="col">
+                <div class="card">
+                    <img class="card-img-top" src="{{ Agro.imagen.url }}">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold">{{ Agro.title }}</h5>
+                        <p class="card-text">{{ Agro.description}}</p>
+                        {% if Agro.url %}
+                        <a href="{{ Agro.url }}" class="btn btn-primary">
+                            Product link
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         {% endfor %}
+    </div>
+    <br/>
     <br/>
 </div>
