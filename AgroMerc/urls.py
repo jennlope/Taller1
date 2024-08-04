@@ -21,5 +21,6 @@ from Agro import views as AgroViews
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', AgroViews.home),
-    path('about', AgroViews.about)
+    path('about', AgroViews.about),
+    path('addProduct',AgroViews.addProduct),
 ]

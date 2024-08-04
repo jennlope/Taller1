@@ -1,0 +1,139 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="{% static "CSS's/style.css" %}" />
+    <title>Agregar Productos</title>
+  </head>
+  <body>
+    <!-- Header -->
+    <div class="row" style="background-color: black;">
+      <div class="card-header">
+        <header>
+          <div class="columna">
+            <div class="col">
+              <img src="{% static 'AgroMerc.jpg' %}" class="img-fluid" alt="AgroMerc" style="width: 8cm;" />
+            </div>
+            <div class="col" style="color: white; font-size:x-large; margin:
+                            auto;">
+              <h1 class="h1">AgroMerc</h1>
+            </div>
+            <div class="col-2" style="margin: auto;"></div>
+          </div>
+        </header>
+      </div>
+    </div>
+    <!-- Header -->
+    <!-- Contenido -->
+    <div class="contenido">
+      <div class="col-md-2" style="background-color: black;">
+        <h1>contenido</h1>
+      </div>
+      <div class="col-md-8" style="align-content: center;">
+        <div class="row">
+          <div class="form-control">
+            <form method="post">
+              <div class="col-md-12">
+                {% csrf_token %}
+                <div class="mb-6">
+                  <div class="form-label">
+                    <label for="producto">Producto</label>
+                  </div>
+                  <div class="form-select">
+                    <select name="ProductName" id="ProductName" class="form-select" aria-label="Default select
+                                            example">
+                      <option selected value="Aguacate">Aguacate</option>
+                      <option value="Banano">Banano</option>
+                      <option value="Brócoli">Brócoli</option>
+                      <option value="Café">Café</option>
+                      <option value="Cebolla_Cabezona">Cebolla Cabezona</option>
+                      <option value="Cebolla_Larga">Cebolla Larga</option>
+                      <option value="Coliflor">Coliflor</option>
+                      <option value="Frijol">Frijol</option>
+                      <option value="Guayaba">Guayaba</option>
+                      <option value="Lechuga">Lechuga</option>
+                      <option value="Limón">Limón</option>
+                      <option value="Lulo">Lulo</option>
+                      <option value="Maíz">Maíz</option>
+                      <option value="Mango">Mango</option>
+                      <option value="Maracuyá">Maracuyá</option>
+                      <option value="Naranja">Naranja</option>
+                      <option value="Papa">Papa</option>
+                      <option value="Papaya">Papaya</option>
+                      <option value="Plátano">Platano</option>
+                      <option value="Sandía">Sandía</option>
+                      <option value="Tomate">Tomate</option>
+                      <option value="Yuca">Yuca</option>
+                      <option value="Zanahoria">Zanahoria</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="mb-6">
+                  <div class="form-label">
+                    <label for="producto">Nombre del Producto</label>
+                  </div>
+                  <input type="text" name="specificName" id="specificName" placeholder="ingrese el nombre/tipo
+                                        especifico del producto" /><br />
+                  <p class="p-1" style="color: blue;">Ej: si es Limón Tahití, escriba Tahití; si es Naranja Valencia, escriba Valencia, a así con los demas</p>
+                </div>
+                <div class="mb-6">
+                  <div class="form-label">
+                    <label for="producto">Unidad de Medida</label>
+                  </div>
+                  <div class="form-select">
+                    <select name="unit" id="unit">
+                      <option selected value="Kg">Kilogramos</option>
+                      <option value="gr">Gramos</option>
+                      <option value="Unidades">Unidades</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="mb-6">
+                  <div class="form-control">
+                    <label for="producto">Cantidad Maxima a Disponer</label>
+                  </div>
+                  <input type="text" name="cantidadMax" id="cantidadMax" />
+                </div>
+                <div class="mb-6">
+                  <div class="form-control">
+                    <label for="producto">Cantidad Mínima a Vender</label>
+                  </div>
+                  <input type="text" name="cantidadMin" id="cantidadMin" />
+                </div>
+                <div class="md-5">
+                  <button type="submit" class="btn btn-primary mb-3">Agregar Producto</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2" style="background-color: black;">
+        <h1>contenido</h1>
+      </div>
+    </div>
+    <!-- contenido -->
+    <!-- footer -->
+    <div class="row" style="background-color: black;">
+      <footer class="blockquote-footer">
+        <div class="columna">
+          <div class="col">
+            <img src="{% static 'AgroMerc.jpg' %}" class="img-fluid" alt />
+          </div>
+          <div class="col" style="color: white; font-size: x-large;
+                        margin: auto;">
+            <h1 class="h1">AgroMerc</h1>
+          </div>
+          <div class="col-3"></div>
+        </div>
+      </footer>
+    </div>
+    <!-- footer -->
+  </body>
+</html>
