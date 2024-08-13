@@ -20,7 +20,12 @@ from Agro import views as AgroViews
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', AgroViews.home),
+    path('', AgroViews.signIn,name='signIn'),
+    path('signUp',AgroViews.signUp,name='signUp'),
+    path('agroMerc',AgroViews.agroMerc,name='agroMerc'),
+    path('mainMenu',AgroViews.mainMenu,name='mainMenu'),
+    path('purchase',AgroViews.purchase,name='purchase'),
+    path('madeAPurchase',AgroViews.madeAPurchase,name="madeAPurchase"),
     path('about', AgroViews.about),
-    path('addProduct',AgroViews.addProduct),
+    path('addProduct',AgroViews.addProduct,name='addProduct'),
 ]
