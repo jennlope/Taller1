@@ -1,53 +1,22 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Boostrap -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ"
-      crossorigin="anonymous" />
-    <!-- Styles -->
-    <link rel="stylesheet" href="{% static "CSS's/style.css" %}" />
-    <title>Add Products</title>
-  </head>
-  <body>
-    <!-- Header -->
-    <div class="header row align-items-center">
-      <div class="col-4">
-        <img src="{% static 'AgroMerc.jpg' %}" class="img-fluid"
-          alt="AgroMerc" />
-      </div>
-      <div class="col-6">
-        <h1>AgroMerc</h1>
-      </div>
-      <div class="col-2 text-end">
-        <button class="button"><a href="main">Back to Main
-            Menú</a></button>
-      </div>
-    </div>
-    <!-- Header -->
-    <!-- Content -->
-    <div class="content">
-      <div class="col-md-2">
-        <h1>Content</h1>
-      </div>
-      <div class="col-md-8">
+{% extends "base.html" %}
+
+{% block buttons %}
+<a href="{% url 'mainMenu' %}" class="btn btn-success me-2">
+    Main Menú
+</a>
+{% endblock buttons %}
+
+{% block content %}
+{% if not productAdded %}
+<!-- Formulario de Producto -->
+<div class="container mt-4">
+    <form method="post">
+        <!-- csrf_token -->
+         {% csrf_token %}
         <div class="row">
-          <!-- Conditional -->
-          <!-- Form -->
-          <div class="form-control">
-            <form method="post">
-              <!-- csrf_token -->
-              <div class="col-md-12">
-                <div class="mb-6">
-                  <label for="product" class="form-label">Producto</label>
-                  <select name="productName" id="productName"
-                    class="form-select" aria-label="Default select example">
+            <div class="col-md-6 mb-3">
+                <label for="productName" class="form-label">Producto</label>
+                <select name="productName" id="productName" class="form-select" aria-label="Seleccione un producto">
                     <option selected value="Aguacate">Aguacate</option>
                     <option value="Banano">Banano</option>
                     <option value="Brócoli">Brócoli</option>
@@ -66,78 +35,53 @@
                     <option value="Naranja">Naranja</option>
                     <option value="Papa">Papa</option>
                     <option value="Papaya">Papaya</option>
-                    <option value="Plátano">Plátano</option>
+                    <option value="Plátano">Platano</option>
                     <option value="Sandía">Sandía</option>
-                    <option value="Tomáte">Tomáte</option>
+                    <option value="Tomate">Tomate</option>
                     <option value="Yuca">Yuca</option>
                     <option value="Zanahoria">Zanahoria</option>
-                  </select>
-                </div>
-                <div class="mb-6">
-                  <label for="specificName" class="form-label">Nombre del
-                    Producto</label>
-                  <input type="text" name="specificName" id="specificName"
-                    placeholder="Ingrese el nombre/tipo especifico del producto"
-                    class="form-control" />
-                  <p class="p-1">Ej: si es Limón Tahití, escriba Tahití; si es
-                    Naranja Valencia, escriba Valencia, y así con los demás</p>
-                </div>
-                <div class="mb-6">
-                  <label for="unit" class="form-label">Unidad de Medida</label>
-                  <select name="unit" id="unit" class="form-select">
-                    <option selected value="Kg">Kilogramos</option>
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="specificName" class="form-label">Nombre Específico del Producto</label>
+                <input type="text" name="specificName" id="specificName" class="form-control" />
+                <div class="form-text text-muted">Si es Limón Tahití, escriba Tahití; si es Naranja Valencia, escriba Valencia.</div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <label for="unit" class="form-label">Unidad de Medida</label>
+                <select name="unit" id="unit" class="form-select">
+                    <option selected disabled>Seleccione una unidad</option>
+                    <option value="Kg">Kilogramos</option>
                     <option value="gr">Gramos</option>
                     <option value="Units">Unidades</option>
-                  </select>
-                </div>
-                <div class="mb-6">
-                  <label for="maximunQuantity" class="form-control">Cantidad
-                    Máxima</label>
-                  <input type="text" name="maxQuantity" id="maxQuantity"
-                    class="form-control" />
-                </div>
-                <div class="mb-6">
-                  <label for="minimunQuantity" class="form-control">Cantidad
-                    Mínima</label>
-                  <input type="text" name="minQuiantity" id="minQuiantity"
-                    class="form-control" />
-                </div>
-                <div class="mb-5">
-                  <button type="submit" class="btn btn-primary mb-3">Agregar
-                    Producto</button>
-                </div>
-              </div>
-            </form>
-          </div>
-          <!-- Form -->
-          <!-- End Conditional -->
-          <!-- Conditional -->
-          <h1>Producto</h1>
-          <div class="h-100">Producto ingresado, Redirigiendo al feed</div>
-          <!-- refresh add url main -->
-          <!-- End Conditional -->
+                </select>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <label for="maxQuantity" class="form-label">Cantidad Máxima</label>
+                <input type="text" name="maxQuantity" id="maxQuantity" class="form-control" />
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <label for="minQuantity" class="form-label">Cantidad Mínima</label>
+                <input type="text" name="minQuantity" id="minQuantity" class="form-control" />
+            </div>
+            
+            <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">Agregar Producto</button>
+            </div>
         </div>
-      </div>
-      <div class="col-md-2">
-        <h1>Content</h1>
-      </div>
+    </form>
+</div>
+{% else %}
+<!-- Mensaje de Redirección -->
+<div class="container mt-5">
+    <h1 class="text-center">Producto</h1>
+    <div class="alert alert-info text-center">
+        Producto ingresado, redirigiendo al feed...
     </div>
-    <!-- Content -->
-
-    <!-- Footer -->
-    <div class="footer row align-items-center">
-      <div class="col-6">
-        <img src="{% static 'AgroMerc.jpg' %}" class="img-fluid"
-          alt="AgroMerc" />
-      </div>
-      <div class="col-4">
-        <h1>AgroMerc</h1>
-      </div>
-      <div class="col-2 text-end">
-        <button type="button" class="btn btn-success"><a href="AgroMerc"
-            class="link-success">About Us</a></button>
-      </div>
-    </div>
-    <!-- Footer -->
-  </body>
-</html>
+    <meta http-equiv="refresh" content="5; url={% url 'mainMenu' %}>
+</div>
+{% endif %}
+{% endblock content %}
