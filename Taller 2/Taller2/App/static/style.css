@@ -1,0 +1,11 @@
+body {
+    padding-top: 150px;
+    /* Espacio para el header */
+    padding-bottom: 150px;
+    /* Espacio para el footer */
+}
+
+main {
+    min-height: calc(100vh - 300px);
+    /* Altura mínima para que el contenido ocupe el espacio disponible */
+}
