@@ -19,15 +19,25 @@
       <div class="col-md-6">
         <label for="name" class="form-label">Nombres completos</label>
         <input type="text" name="name" id="name" class="form-control" placeholder="Ingrese sus nombres">
+        {% if textName != "" and trySignUp %}
+        <div class="alert alert-danger mt-2">
+          <p>{{ textName }}</p>
+        </div>
+        {% endif %}
       </div>
       <div class="col-md-6">
         <label for="surnames" class="form-label">Apellidos completos</label>
         <input type="text" name="surnames" id="surnames" class="form-control" placeholder="Ingrese sus apellidos">
+        {% if textSurName != ""  and trySignUp %}
+        <div class="alert alert-danger mt-2">
+          <p>{{ textSurName }}</p>
+        </div>
+        {% endif %}
       </div>
       <div class="col-md-6">
         <label for="cedula" class="form-label">Número de Cédula</label>
         <input type="text" name="cedula" id="cedula" class="form-control" placeholder="Ingrese su número de cédula">
-        {% if existCedula %}
+        {% if existCedula or textCedula != "" and trySignUp %}
         <div class="alert alert-danger mt-2">
           <p>{{ textCedula }}</p>
         </div>
@@ -36,11 +46,16 @@
       <div class="col-md-6">
         <label for="phoneNumber" class="form-label">Número de celular</label>
         <input type="text" name="phoneNumber" id="phoneNumber" class="form-control" placeholder="Ingrese su número de celular">
+        {% if textPhoneNumber != "" and trySignUp %}
+        <div class="alert alert-danger mt-2">
+          <p>{{ textPhoneNumber }}</p>
+        </div>
+        {% endif %}
       </div>
       <div class="col-md-6">
         <label for="email" class="form-label">Correo electrónico</label>
         <input type="email" name="email" id="email" class="form-control" placeholder="example@example.com">
-        {% if existEmail %}
+        {% if existEmail or textEmail != "" and trySignUp %}
         <div class="alert alert-danger mt-2">
           <p>{{ textEmail }}</p>
         </div>
@@ -49,7 +64,7 @@
       <div class="col-md-6">
         <label for="userName" class="form-label">Nombre de usuario</label>
         <input type="text" name="userName" id="userName" class="form-control" placeholder="Ingrese su nombre de usuario">
-        {% if existUserName %}
+        {% if existUserName or textUserName != "" and trySignUp%}
         <div class="alert alert-danger mt-2">
           <p>{{ textUserName }}</p>
         </div>
@@ -58,6 +73,11 @@
       <div class="col-md-6">
         <label for="password" class="form-label">Contraseña</label>
         <input type="password" name="password" id="password" class="form-control" placeholder="Ingrese su contraseña">
+        {% if textPassword != ""  and trySignUp %}
+        <div class="alert alert-danger mt-2">
+          <p>{{ textPassword }}</p>
+        </div>
+        {% endif %}
       </div>
       <div class="col-md-6">
         <label for="userType" class="form-label">Tipo de Usuario</label>

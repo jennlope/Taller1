@@ -52,10 +52,17 @@ def signUp(request):
     existEmail=False
     existUserName=False
     registered=False
-    textUserName=""
+    dataError=False
+    textName=""
+    textSurname=""
     textCedula=""
+    textPhoneNumber=""
     textEmail=""
+    textUserName=""
+    textPassword=""
+    trySignUp=False
     if request.method == 'POST':
+        trySignUp=True
         name=str(request.POST['name'])
         surnames=str(request.POST['surnames'])
         cedula=str(request.POST['cedula'])
@@ -64,31 +71,54 @@ def signUp(request):
         userName=str(request.POST['userName'])
         password=str(request.POST['password'])
         userType=str(request.POST.get('userType'))
-        for client in colClients.find():
-            if client['userName'] == userName:
-                existUserName=True
-            if client['cedula'] == cedula:
-                existCedula=True
-            if client['email'] == email:
-                existEmail=True
-        if(not existUserName and not existCedula and not existEmail):
-            registered = True
-            #save data in database
-            data={"name":name,"surnames":surnames,"cedula":cedula,
-                   "phoneNumber":phoneNumber,"email":email,
-                   "userName":userName,"password":password,
-                   "userType":userType}
-            colClients.insert_one(data)
-        if(existUserName):
-            textUserName="El usuario "+userName+ " ya existe, intente uno diferente"
-        if(existCedula):
-            textCedula="La cédula ya se encuentra registrada"
-        if(existEmail):
-            textEmail="El correo electrónico "+email+" ya se encuentra registrado"
-    context={"textUsername":textUserName,"textCedula":textCedula,"textEmail":textEmail,
-                 "existUserName":existUserName,"existCedula":existCedula,"existEmail":existEmail,
-                 "registered":registered}
-    return render(request,'signUp.html',context)
+        if name == "":
+            textName="Por favor ingrese su nombre"
+            dataError=True
+        if surnames == "":
+            textSurname="Por favor ingrese su(s) Apellido(s)"
+            dataError=True
+        if cedula == "":
+            textCedula="Por favor ingrese su cédula"
+            dataError=True
+        if phoneNumber=="":
+            textPhoneNumber="Por favor ingrese su número de teléfono"
+            dataError=True
+        if email=="":
+            textEmail="Por favor ingrese su correo electrónico"
+            dataError=True
+        if userName=="":
+            textUserName="Por favor ingrese su nombre de usuario"
+            dataError=True
+        if password=="":
+            textPassword="Por favor ingrese una contraseña"
+            dataError=True
+        if not dataError:
+            for client in colClients.find():
+                if client['userName'] == userName:
+                    existUserName=True
+                if client['cedula'] == cedula:
+                    existCedula=True
+                if client['email'] == email:
+                    existEmail=True
+            if(not existUserName and not existCedula and not existEmail ):
+                registered = True
+                #save data in database
+                data={"name":name,"surnames":surnames,"cedula":cedula,
+                    "phoneNumber":phoneNumber,"email":email,
+                    "userName":userName,"password":password,
+                    "userType":userType}
+                colClients.insert_one(data)
+            if(existUserName):
+                textUserName="El usuario "+userName+ " ya existe, intente uno diferente"
+            if(existCedula):
+                textCedula="La cédula ya se encuentra registrada"
+            if(existEmail):
+                textEmail="El correo electrónico "+email+" ya se encuentra registrado"
+    context={"textName":textName,"textSurName":textSurname,"textCedula":textCedula,"textEmail":textEmail,
+             "textPhoneNumber":textPhoneNumber,"textUserName":textUserName,"textPassword":textPassword,
+             "existUserName":existUserName,"existCedula":existCedula,"existEmail":existEmail,
+             "registered":registered,"trySignUp":trySignUp}
+    return render(request,'signUp.html',context) #verificar para no montar nada en blanco
 
 def agroMerc(request):
     context={"userActive":False}
