@@ -1,8 +1,8 @@
-#MongoDB
+#MongoDB library
 from pymongo import MongoClient
 
-from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.shortcuts import render,redirect
+
 
 #MongoDB server client conection
 client = MongoClient("mongodb+srv://AgroMerc:AgroMerc2023@cluster0.5elomeg.mongodb.net")
@@ -52,10 +52,17 @@ def signUp(request):
     existEmail=False
     existUserName=False
     registered=False
-    textUserName=""
+    dataError=False
+    textName=""
+    textSurname=""
     textCedula=""
+    textPhoneNumber=""
     textEmail=""
+    textUserName=""
+    textPassword=""
+    trySignUp=False
     if request.method == 'POST':
+        trySignUp=True
         name=str(request.POST['name'])
         surnames=str(request.POST['surnames'])
         cedula=str(request.POST['cedula'])
@@ -64,34 +71,58 @@ def signUp(request):
         userName=str(request.POST['userName'])
         password=str(request.POST['password'])
         userType=str(request.POST.get('userType'))
-        for client in colClients.find():
-            if client['userName'] == userName:
-                existUserName=True
-            if client['cedula'] == cedula:
-                existCedula=True
-            if client['email'] == email:
-                existEmail=True
-        if(not existUserName and not existCedula and not existEmail):
-            registered = True
-            #save data in database
-            data={"name":name,"surnames":surnames,"cedula":cedula,
-                   "phoneNumber":phoneNumber,"email":email,
-                   "userName":userName,"password":password,
-                   "userType":userType}
-            colClients.insert_one(data)
-        if(existUserName):
-            textUserName="El usuario "+userName+ " ya existe, intente uno diferente"
-        if(existCedula):
-            textCedula="La cédula ya se encuentra registrada"
-        if(existEmail):
-            textEmail="El correo electrónico "+email+" ya se encuentra registrado"
-    context={"textUsername":textUserName,"textCedula":textCedula,"textEmail":textEmail,
-                 "existUserName":existUserName,"existCedula":existCedula,"existEmail":existEmail,
-                 "registered":registered}
-    return render(request,'signUp.html',context)
+        if name == "":
+            textName="Por favor ingrese su nombre"
+            dataError=True
+        if surnames == "":
+            textSurname="Por favor ingrese su(s) Apellido(s)"
+            dataError=True
+        if cedula == "":
+            textCedula="Por favor ingrese su cédula"
+            dataError=True
+        if phoneNumber=="":
+            textPhoneNumber="Por favor ingrese su número de teléfono"
+            dataError=True
+        if email=="":
+            textEmail="Por favor ingrese su correo electrónico"
+            dataError=True
+        if userName=="":
+            textUserName="Por favor ingrese su nombre de usuario"
+            dataError=True
+        if password=="":
+            textPassword="Por favor ingrese una contraseña"
+            dataError=True
+        if not dataError:
+            for client in colClients.find():
+                if client['userName'] == userName:
+                    existUserName=True
+                if client['cedula'] == cedula:
+                    existCedula=True
+                if client['email'] == email:
+                    existEmail=True
+            if(not existUserName and not existCedula and not existEmail ):
+                registered = True
+                #save data in database
+                data={"name":name,"surnames":surnames,"cedula":cedula,
+                    "phoneNumber":phoneNumber,"email":email,
+                    "userName":userName,"password":password,
+                    "userType":userType}
+                colClients.insert_one(data)
+            if(existUserName):
+                textUserName="El usuario "+userName+ " ya existe, intente uno diferente"
+            if(existCedula):
+                textCedula="La cédula ya se encuentra registrada"
+            if(existEmail):
+                textEmail="El correo electrónico "+email+" ya se encuentra registrado"
+    context={"textName":textName,"textSurName":textSurname,"textCedula":textCedula,"textEmail":textEmail,
+             "textPhoneNumber":textPhoneNumber,"textUserName":textUserName,"textPassword":textPassword,
+             "existUserName":existUserName,"existCedula":existCedula,"existEmail":existEmail,
+             "registered":registered,"trySignUp":trySignUp}
+    return render(request,'signUp.html',context) #verificar para no montar nada en blanco
 
 def agroMerc(request):
-    return render(request,'AgroMerc.html')
+    context={"userActive":False}
+    return render(request,'AgroMerc.html',context)
 
 def mainMenu(request):
     global userOnline
@@ -132,7 +163,6 @@ def purchase(request):
                     print(type(value),value)
                     print("Value Error")
                     return redirect('mainMenu')
-    
     context={"purchaseMade":purchaseMade}
     return render(request,'purchase.html',context)
 
@@ -182,9 +212,39 @@ def about(request):
     return render(request, 'about.html')
 
 def addProduct(request):
-    return render(request, 'AddProducts.html')
+    global userOnline
+    user=userOnline
+    productAdded=False
+    if request.method=='POST':
+        productAdded=True
+        productName=str(request.POST.get("productName"))
+        specificName=str(request.POST["specificName"])
+        unit=str(request.POST.get('unit'))
+        maxQuantity=str(request.POST['maxQuantity'])
+        minQuantity=str(request.POST['minQuantity'])
+        id2v=id2(user['cedula'])
+        data={"name":productName,"specificName":specificName,
+              "maxQuantity":maxQuantity,"minQuantity":minQuantity,
+              "unit":unit,"seller":user['name']+' '+user['surnames'],
+              "id":user['cedula'],"id2":id2v}
+        #add to database
+        colProducts.insert_one(data)
+        if productAdded:
+            return redirect('mainMenu')
+        productAdded=True
+    context={"productAdded":productAdded}
+    return render(request, 'AddProducts.html',context)
 
-
+def myProducts(request):
+    global userOnline
+    user = userOnline
+    myProductsList=[]
+    for product in colProducts.find():
+        if product['id']==user['cedula']:
+            myProductsList.append(product)
+    context={"myProductsList":myProductsList}
+    return render(request,'myProducts.html',context)
+    
 
     """
     auxiliary functions to the views functions implements
@@ -207,3 +267,10 @@ def possiblePurchase(id2,newValue,idSeller):
     
 def addPurchase(data):
     colPurchases.insert_one(data)
+    
+def id2(id):
+    id2Value=0
+    for product in colProducts.find({"id":id}):
+        id2Value=product['id2']
+    id2Value=str(int(id2Value)+1)
+    return id2Value
