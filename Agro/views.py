@@ -1,7 +1,10 @@
 #MongoDB library
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 
 from django.shortcuts import render,redirect
+
+
 
 
 #MongoDB server client conection
@@ -239,8 +242,35 @@ def myProducts(request):
     global userOnline
     user = userOnline
     myProductsList=[]
+    if request.method=='POST':
+        action = request.POST.get('action')
+        productId = request.POST.get('product_id')
+        if action == 'delete':
+            #delete product
+            colProducts.delete_one({'_id': ObjectId(productId)})
+            return redirect('myProducts')
+        elif action == 'edit':
+            product = colProducts.find_one({'_id': ObjectId(productId)})
+            product['product_id'] = str(product['_id'])
+            return render(request,'editProducts.html',{'product':product})
+        elif action == 'update':
+            #update product
+            updatedData={
+                        'name':request.POST.get('product_name'),
+                        'specificName':request.POST.get('product_specificName'),
+                        'maxQuantity':request.POST.get('max_quantity'),
+                        'minQuantity':request.POST.get('min_quantity'),
+                        'unit':str(request.POST.get('unit')),
+                        'seller':request.POST.get('product_seller'),
+                        'id':request.POST.get('product_id1'),
+                        'id2':request.POST.get('product_id2')}
+            print(updatedData)
+            colProducts.update_one({'_id': ObjectId(productId)}, {'$set': updatedData})
+            return redirect('myProducts')
     for product in colProducts.find():
-        if product['id']==user['cedula']:
+        if product['id'] == user['cedula']:
+            # Añadir una nueva clave para evitar el guion bajo
+            product['product_id'] = str(product['_id'])
             myProductsList.append(product)
     context={"myProductsList":myProductsList}
     return render(request,'myProducts.html',context)
@@ -274,3 +304,4 @@ def id2(id):
         id2Value=product['id2']
     id2Value=str(int(id2Value)+1)
     return id2Value
+
