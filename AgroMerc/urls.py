@@ -28,10 +28,11 @@ urlpatterns = [
     path('agroMerc',AgroViews.agroMerc,name='agroMerc'),
     path('mainMenu',AgroViews.mainMenu,name='mainMenu'),
     path('purchase',AgroViews.purchase,name='purchase'),
-    path('madeAPurchase',AgroViews.madeAPurchase,name="madeAPurchase"),
+    path('madeAPurchase',AgroViews.madeAPurchase,name='madeAPurchase'),
     path('about', AgroViews.about),
     path('addProduct',AgroViews.addProduct,name='addProduct'),
     path('myProducts',AgroViews.myProducts,name='myProducts'),
+    path('buyercar',AgroViews.buyerCar,name='buyerCar'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

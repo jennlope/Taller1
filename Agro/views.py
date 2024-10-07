@@ -17,6 +17,7 @@ db = client["AgroMerc"]
 colClients=db['Clientes']
 colProducts = db['Productos']
 colPurchases = db['Compras']
+colCar=db['BuyerCar']
 
 # User
 userOnline = {}
@@ -151,21 +152,28 @@ def purchase(request):
     global userOnline
     user=userOnline
     if request.method=='POST':
-        for key, value in request.POST.items():
-            if key.startswith('quantityOrdered_'):
-                values=key.split('_')
-                print(key,value)
-                product=searchProduct(values[1],values[4])
-                seller=searchSeller(str(values[1]))
-                try:
-                    quantityOrdered = int(value)
-                    context={"buyed":purchaseMade,"product":product,
-                         "quantityOrdered":quantityOrdered,"user":user,"seller":seller}
-                    return render(request,'purchase.html',context)
-                except ValueError:
-                    print(type(value),value)
-                    print("Value Error")
-                    return redirect('mainMenu')
+        action = request.POST.get('action')
+        productId=request.POST.get('product_id')
+        productId2=request.POST.get('product_id2')
+        product=searchProduct(productId,productId2)
+        seller=searchSeller(str(productId))
+        try:
+            quantityOrdered=int(request.POST.get('quantityOrdered'))
+            if action=='addToCar':
+                data={'nameProduct':product['name'],'productSpecificName':product['specificName'],
+                      'productId2':product['id2'], 'nameSeller':product['seller'], 
+                      'idBuyer':user['cedula'],'idSeller':seller['cedula'],
+                      'quantityOrdered':quantityOrdered}
+                print(data)
+                colCar.insert_one(data)
+                return redirect('mainMenu')
+            if action=='purchase':
+                context={"buyed":purchaseMade,"product":product,
+                        "quantityOrdered":quantityOrdered,"user":user,"seller":seller}
+                return render(request,'purchase.html',context)
+        except ValueError:
+                print("Value Error")
+                return redirect('mainMenu')
     context={"purchaseMade":purchaseMade}
     return render(request,'purchase.html',context)
 
@@ -210,6 +218,8 @@ def home(request):
         'selected_category': category_filter,
     }
     return render(request, 'home.html', context)
+
+
 def about(request):
     #return HttpResponse('<h1>Welcome to About page</h1>')
     return render(request, 'about.html')
@@ -276,6 +286,13 @@ def myProducts(request):
     return render(request,'myProducts.html',context)
     
 
+def buyerCar(request):
+    global userOnline
+    user = userOnline
+    products=searchCar(user['cedula'])
+    context={'products':products}
+    return render(request,'buyercar.html',context)
+
     """
     auxiliary functions to the views functions implements
     """
@@ -291,6 +308,10 @@ def searchSeller(cedula):
     search=colClients.find({"cedula":cedula})
     for seller in search:
         return seller
+    
+def searchCar(idBuyer):
+    search = colCar.find({'idBuyer':idBuyer})
+    return search
     
 def possiblePurchase(id2,newValue,idSeller):
     colProducts.update_one({"id":idSeller,"id2":id2},{"$set":{"maxQuantity":newValue}})

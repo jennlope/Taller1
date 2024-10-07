@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block buttons %}
+<div class="d-flex justify-content-end mb-4">
+    <a href="{% url 'mainMenu' %}" class="btn btn-outline-success me-2">
+        Main Menu
+    </a>
+    <a href="{% url 'signIn' %}" class="btn btn-outline-danger">
+        Sign Out
+    </a>
+</div>
+{% endblock buttons %}
+
+{% block content %}
+<div class="container">
+    <h3 class="mb-4 text-center">Carrito de Compras</h3>
+
+    {% for product in products %}
+    <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">
+                <strong>Producto: </strong>
+                {{ product.nameProduct }} {{product.productSpecificName }}
+            </h5>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                    <strong>Vendedor: </strong> {{ product.nameSeller }}
+                </li>
+                <li class="list-group-item">
+                    <strong>Cantidad: </strong> {{ product.quantityOrdered }}
+                </li>
+            </ul>
+        </div>
+    </div>
+    {% endfor %}
+
+    <form action="{% url 'buyerCar' %}" method="post" class="mt-4">
+        {% csrf_token %}
+        <input type="hidden" name="id_buyer" value="{{ product.idBuyer }}">
+
+        <div class="row">
+            <div class="col-md-6">
+                <button type="submit" name="action" value="purchase"
+                    class="btn btn-success btn-block w-100">
+                    Comprar
+                </button>
+            </div>
+            <div class="col-md-6">
+                <button type="submit" name="action" value="cancel"
+                    class="btn btn-danger btn-block w-100">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock content %}
