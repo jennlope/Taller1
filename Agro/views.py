@@ -131,20 +131,27 @@ def agroMerc(request):
 def mainMenu(request):
     global userOnline
     user=userOnline
-    productsListName = []
+    productsListName = list(colProducts.find())
     seller = False
     #verify if is seller
     if user['userType'] == 'seller':
         seller = True
+    # Obtener la categoría seleccionada desde el GET
+    selected_category = request.GET.get('category', None)
+    
+    if selected_category:
+        if selected_category != 'nothing':
+            # Filtrar productos por la categoría seleccionada
+            productsListName = list(colProducts.find({"categories": selected_category}))
+        elif selected_category=='nothing':
+            productsListName = list(colProducts.find())
+        
     #look for products list
-    for product in colProducts.find():
-        #add product at list to be shown
-        productsListName.append(product)
     context={"name":user['name'],'surnames':user['surnames'],
              "cedula":user['cedula'],"phoneNumber":user['phoneNumber'],
              "email":user['email'],"userName":user['userName'],
              "password":user['password'],"seller":seller,
-             "productsListName":productsListName}
+             "productsListName":productsListName,'category':selected_category}
     return render(request,'mainMenu.html',context)
 
 def purchase(request):
