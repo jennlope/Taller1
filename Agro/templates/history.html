@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block buttons %}
+<div class="d-flex justify-content-end mb-4">
+    <a href="{% url 'mainMenu' %}" class="btn btn-outline-success me-2">
+        Main Menu
+    </a>
+    <a href="{% url 'signIn' %}" class="btn btn-outline-danger">
+        Sign Out
+    </a>
+</div>
+{% endblock buttons %}
+
+{% block content %}
+
+{% endblock content %}
+
+{% block scripts %}
+
+{% endblock scripts %}

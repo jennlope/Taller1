@@ -243,10 +243,11 @@ def addProduct(request):
         maxQuantity=str(request.POST['maxQuantity'])
         minQuantity=str(request.POST['minQuantity'])
         id2v=id2(user['cedula'])
+        category = addCategories(productName)
         data={"name":productName,"specificName":specificName,
               "maxQuantity":maxQuantity,"minQuantity":minQuantity,
               "unit":unit,"seller":user['name']+' '+user['surnames'],
-              "id":user['cedula'],"id2":id2v}
+              "id":user['cedula'],"id2":id2v,'categories':category}
         #add to database
         colProducts.insert_one(data)
         if productAdded:
@@ -333,3 +334,33 @@ def id2(id):
     id2Value=str(int(id2Value)+1)
     return id2Value
 
+def addCategories(productName):
+    category={
+        'Aguacate': ['Frutas tropicales', 'Fuentes de fibra'],
+        'Banano': ['Frutas tropicales', 'Fuentes de fibra'],
+        'Brócoli': ['Hortalizas', 'Verduras crucíferas', 'Fuentes de fibra'],
+        'Café': ['Granos'],
+        'Cebolla_Cabezona': ['Hortalizas', 'Verduras crucíferas', 'Fuentes de fibra'],
+        'Cebolla_Larga': ['Hortalizas', 'Verduras crucíferas', 'Fuentes de fibra'],
+        'Coliflor': ['Hortalizas', 'Verduras crucíferas'],
+        'Frijol': ['Legumbres', 'Fuentes de fibra','Granos'],
+        'Guayaba': ['Frutas tropicales', 'Fuentes de fibra'],
+        'Lechuga': ['Hortalizas', 'Fuentes de fibra'],
+        'Limón': ['Frutas tropicales', 'Cítricos'],
+        'Lulo': ['Frutas tropicales', 'Cítricos'],
+        'Maíz': ['Legumbres', 'Fuentes de fibra','Granos'],
+        'Mango': ['Frutas tropicales'],
+        'Maracuyá': ['Frutas tropicales', 'Cítricos'],
+        'Naranja': ['Frutas tropicales', 'Cítricos'],
+        'Papa': ['Hortalizas', 'Tubérculos', 'Fuentes de fibra'],
+        'Papaya': ['Frutas tropicales'],
+        'Plátano': ['Frutas tropicales'],
+        'Sandía': ['Frutas tropicales'],
+        'Tomate': ['Hortalizas', 'Fuentes de fibra'],
+        'Yuca': ['Hortalizas', 'Tubérculos', 'Fuentes de fibra'],
+        'Zanahoria': ['Hortalizas', 'Tubérculos', 'Fuentes de fibra']
+    }
+    if productName in category:
+            categories=category[productName]
+            return categories
+    
