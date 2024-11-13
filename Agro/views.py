@@ -1,7 +1,10 @@
 #MongoDB library
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 
 from django.shortcuts import render,redirect
+
+
 
 
 #MongoDB server client conection
@@ -14,6 +17,7 @@ db = client["AgroMerc"]
 colClients=db['Clientes']
 colProducts = db['Productos']
 colPurchases = db['Compras']
+colCar=db['BuyerCar']
 
 # User
 userOnline = {}
@@ -127,20 +131,27 @@ def agroMerc(request):
 def mainMenu(request):
     global userOnline
     user=userOnline
-    productsListName = []
+    productsListName = list(colProducts.find())
     seller = False
     #verify if is seller
     if user['userType'] == 'seller':
         seller = True
+    # Obtener la categoría seleccionada desde el GET
+    selected_category = request.GET.get('category', None)
+    
+    if selected_category:
+        if selected_category != 'nothing':
+            # Filtrar productos por la categoría seleccionada
+            productsListName = list(colProducts.find({"categories": selected_category}))
+        elif selected_category=='nothing':
+            productsListName = list(colProducts.find())
+        
     #look for products list
-    for product in colProducts.find():
-        #add product at list to be shown
-        productsListName.append(product)
     context={"name":user['name'],'surnames':user['surnames'],
              "cedula":user['cedula'],"phoneNumber":user['phoneNumber'],
              "email":user['email'],"userName":user['userName'],
              "password":user['password'],"seller":seller,
-             "productsListName":productsListName}
+             "productsListName":productsListName,'category':selected_category}
     return render(request,'mainMenu.html',context)
 
 def purchase(request):
@@ -148,21 +159,28 @@ def purchase(request):
     global userOnline
     user=userOnline
     if request.method=='POST':
-        for key, value in request.POST.items():
-            if key.startswith('quantityOrdered_'):
-                values=key.split('_')
-                print(key,value)
-                product=searchProduct(values[1],values[4])
-                seller=searchSeller(str(values[1]))
-                try:
-                    quantityOrdered = int(value)
-                    context={"buyed":purchaseMade,"product":product,
-                         "quantityOrdered":quantityOrdered,"user":user,"seller":seller}
-                    return render(request,'purchase.html',context)
-                except ValueError:
-                    print(type(value),value)
-                    print("Value Error")
-                    return redirect('mainMenu')
+        action = request.POST.get('action')
+        productId=request.POST.get('product_id')
+        productId2=request.POST.get('product_id2')
+        product=searchProduct(productId,productId2)
+        seller=searchSeller(str(productId))
+        try:
+            quantityOrdered=int(request.POST.get('quantityOrdered'))
+            if action=='addToCar':
+                data={'nameProduct':product['name'],'productSpecificName':product['specificName'],
+                      'productId2':product['id2'], 'nameSeller':product['seller'], 
+                      'idBuyer':user['cedula'],'idSeller':seller['cedula'],
+                      'quantityOrdered':quantityOrdered}
+                print(data)
+                colCar.insert_one(data)
+                return redirect('mainMenu')
+            if action=='purchase':
+                context={"buyed":purchaseMade,"product":product,
+                        "quantityOrdered":quantityOrdered,"user":user,"seller":seller}
+                return render(request,'purchase.html',context)
+        except ValueError:
+                print("Value Error")
+                return redirect('mainMenu')
     context={"purchaseMade":purchaseMade}
     return render(request,'purchase.html',context)
 
@@ -207,6 +225,8 @@ def home(request):
         'selected_category': category_filter,
     }
     return render(request, 'home.html', context)
+
+
 def about(request):
     #return HttpResponse('<h1>Welcome to About page</h1>')
     return render(request, 'about.html')
@@ -223,10 +243,11 @@ def addProduct(request):
         maxQuantity=str(request.POST['maxQuantity'])
         minQuantity=str(request.POST['minQuantity'])
         id2v=id2(user['cedula'])
+        category = addCategories(productName)
         data={"name":productName,"specificName":specificName,
               "maxQuantity":maxQuantity,"minQuantity":minQuantity,
               "unit":unit,"seller":user['name']+' '+user['surnames'],
-              "id":user['cedula'],"id2":id2v}
+              "id":user['cedula'],"id2":id2v,'categories':category}
         #add to database
         colProducts.insert_one(data)
         if productAdded:
@@ -239,12 +260,46 @@ def myProducts(request):
     global userOnline
     user = userOnline
     myProductsList=[]
+    if request.method=='POST':
+        action = request.POST.get('action')
+        productId = request.POST.get('product_id')
+        if action == 'delete':
+            #delete product
+            colProducts.delete_one({'_id': ObjectId(productId)})
+            return redirect('myProducts')
+        elif action == 'edit':
+            product = colProducts.find_one({'_id': ObjectId(productId)})
+            product['product_id'] = str(product['_id'])
+            return render(request,'editProducts.html',{'product':product})
+        elif action == 'update':
+            #update product
+            updatedData={
+                        'name':request.POST.get('product_name'),
+                        'specificName':request.POST.get('product_specificName'),
+                        'maxQuantity':request.POST.get('max_quantity'),
+                        'minQuantity':request.POST.get('min_quantity'),
+                        'unit':str(request.POST.get('unit')),
+                        'seller':request.POST.get('product_seller'),
+                        'id':request.POST.get('product_id1'),
+                        'id2':request.POST.get('product_id2')}
+            print(updatedData)
+            colProducts.update_one({'_id': ObjectId(productId)}, {'$set': updatedData})
+            return redirect('myProducts')
     for product in colProducts.find():
-        if product['id']==user['cedula']:
+        if product['id'] == user['cedula']:
+            # Añadir una nueva clave para evitar el guion bajo
+            product['product_id'] = str(product['_id'])
             myProductsList.append(product)
     context={"myProductsList":myProductsList}
     return render(request,'myProducts.html',context)
     
+
+def buyerCar(request):
+    global userOnline
+    user = userOnline
+    products=searchCar(user['cedula'])
+    context={'products':products}
+    return render(request,'buyercar.html',context)
 
     """
     auxiliary functions to the views functions implements
@@ -262,6 +317,10 @@ def searchSeller(cedula):
     for seller in search:
         return seller
     
+def searchCar(idBuyer):
+    search = colCar.find({'idBuyer':idBuyer})
+    return search
+    
 def possiblePurchase(id2,newValue,idSeller):
     colProducts.update_one({"id":idSeller,"id2":id2},{"$set":{"maxQuantity":newValue}})
     
@@ -274,3 +333,34 @@ def id2(id):
         id2Value=product['id2']
     id2Value=str(int(id2Value)+1)
     return id2Value
+
+def addCategories(productName):
+    category={
+        'Aguacate': ['Frutas tropicales', 'Fuentes de fibra'],
+        'Banano': ['Frutas tropicales', 'Fuentes de fibra'],
+        'Brócoli': ['Hortalizas', 'Verduras crucíferas', 'Fuentes de fibra'],
+        'Café': ['Granos'],
+        'Cebolla_Cabezona': ['Hortalizas', 'Verduras crucíferas', 'Fuentes de fibra'],
+        'Cebolla_Larga': ['Hortalizas', 'Verduras crucíferas', 'Fuentes de fibra'],
+        'Coliflor': ['Hortalizas', 'Verduras crucíferas'],
+        'Frijol': ['Legumbres', 'Fuentes de fibra','Granos'],
+        'Guayaba': ['Frutas tropicales', 'Fuentes de fibra'],
+        'Lechuga': ['Hortalizas', 'Fuentes de fibra'],
+        'Limón': ['Frutas tropicales', 'Cítricos'],
+        'Lulo': ['Frutas tropicales', 'Cítricos'],
+        'Maíz': ['Legumbres', 'Fuentes de fibra','Granos'],
+        'Mango': ['Frutas tropicales'],
+        'Maracuyá': ['Frutas tropicales', 'Cítricos'],
+        'Naranja': ['Frutas tropicales', 'Cítricos'],
+        'Papa': ['Hortalizas', 'Tubérculos', 'Fuentes de fibra'],
+        'Papaya': ['Frutas tropicales'],
+        'Plátano': ['Frutas tropicales'],
+        'Sandía': ['Frutas tropicales'],
+        'Tomate': ['Hortalizas', 'Fuentes de fibra'],
+        'Yuca': ['Hortalizas', 'Tubérculos', 'Fuentes de fibra'],
+        'Zanahoria': ['Hortalizas', 'Tubérculos', 'Fuentes de fibra']
+    }
+    if productName in category:
+            categories=category[productName]
+            return categories
+    

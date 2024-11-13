@@ -10,6 +10,10 @@
 <a href="{% url 'myProducts' %}" class="btn btn-success me-2">
     Mis Productos
 </a>
+{% else %}
+<a href="{% url 'buyerCar' %}" class="btn btn-success me-2">
+    Carrito de Compras
+</a>
 {% endif %}
 {% endblock buttons %}
 
@@ -21,7 +25,71 @@
             <h1 class="display-5">Welcome, {{name}}</h1>
         </div>
     </div>
-
+    <div class="container py-4">
+        <form method="get" action="{% url 'mainMenu' %}" id="category-form">
+            <div class="row mb-4">
+                <div class="col-md-6 offset-md-3">
+                    <div class="form-group">
+                        <label for="category" class="form-label">
+                            <strong>
+                                Buscar por categoría
+                            </strong>
+                        </label>
+                        <select name="category" id="category"
+                            class="form-select"
+                            onchange="document.getElementById('category-form').submit()">
+                            <option value="nothing"
+                                {% if category == 'nothing' %}
+                                selected
+                                {% endif %}>
+                                Seleccione una opción</option>
+                            <option value="Frutas tropicales"
+                                {% if category == 'Frutas tropicales' %}
+                                selected
+                                {% endif %}>
+                                Frutas Tropicales</option>
+                            <option value="Fuentes de fibra"
+                                {% if category == 'Fuentes de fibra' %}
+                                selected
+                                {% endif %}>
+                                Fuentes de Fibra</option>
+                            <option value="Hortalizas"
+                                {% if category == 'Hortalizas' %}
+                                selected
+                                {% endif %}>
+                                Hortalizas</option>
+                            <option value="Verduras crucíferas"
+                                {% if category == 'Verduras crucíferas' %}
+                                selected
+                                {% endif %}>
+                                Verduras Crucíferas
+                            </option>
+                            <option value="Granos"
+                                {% if category == 'Granos' %}
+                                selected
+                                {% endif %}>
+                                Granos</option>
+                            <option value="Legumbres"
+                                {% if category == 'Legumbres' %}
+                                selected
+                                {% endif %}>
+                                Legumbres</option>
+                            <option value="Cítricos"
+                                {% if category == 'Cítricos' %}
+                                selected
+                                {% endif %}>
+                                Cítricos</option>
+                            <option value="Tubérculos"
+                                {% if category == 'Tubérculos' %}
+                                selected
+                                {% endif %}>
+                                Tubérculos</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
     <div class="row">
         <div class="col-md-8 offset-md-2">
             <div class="list-group">
@@ -53,14 +121,26 @@
                             </ul>
                             <div class="mt-3">
                                 <input type="text"
-                                    name="quantityOrdered_{{product.id}}_{{product.Name}}_{{product.specificName}}_{{product.id2}}"
-                                    id="quantityOrdered_{{product.id}}"
+                                    name="quantityOrdered"
+                                    id="quantityOrdered"
                                     class="form-control"
                                     placeholder="Ingrese la cantidad que desea comprar">
+                                <input type="hidden" name="product_id"
+                                    value="{{product.id}}">
+                                <input type="hidden" name="product_name"
+                                    value="{{product.name}}">
+                                <input type="hidden" name="product_specificName"
+                                    value="{{product.specificName}}">
+                                <input type="hidden" name="product_id2"
+                                    value="{{product.id2}}">
                             </div>
-                            <button type="submit"
+                            <button type="submit" name="action" value="purchase"
                                 class="btn btn-success mt-3 w-100">
                                 Comprar
+                            </button>
+                            <button type="submit" name="action" value="addToCar"
+                                class="btn btn-success mt-3 w-100">
+                                Añadir al carrito de compras
                             </button>
                         </div>
                     </div>
@@ -71,3 +151,5 @@
     </div>
 </div>
 {% endblock content %}
+{% block scripts %}
+{% endblock scripts %}
