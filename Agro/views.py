@@ -3,10 +3,11 @@ from pymongo import MongoClient
 from bson.objectid import ObjectId
 
 from django.shortcuts import render,redirect
+from .models import Agro
 
 
 
-
+'''
 #MongoDB server client conection
 client = MongoClient("mongodb+srv://AgroMerc:AgroMerc2023@cluster0.5elomeg.mongodb.net")
 
@@ -18,6 +19,60 @@ colClients=db['Clientes']
 colProducts = db['Productos']
 colPurchases = db['Compras']
 colCar=db['BuyerCar']
+'''
+
+# Patrón observador
+
+# Clase base para los observadores
+class Observer:
+    def on_user_created(self, user_data):
+        pass
+
+# Cuando un usuario se crea, se notifica a todos los observadores registrados
+class EmailBienvenida(Observer):
+    def on_user_created(self, user_data):
+        print(f"[Correo] Bienvenido {user_data['name']}! Se envió un correo a {user_data['email']}")
+
+class UserRegistro(Observer):
+    def on_user_created(self, user_data):
+        print(f"[Log] Usuario {user_data['userName']} registrado con éxito.")
+
+# El publicador
+class UserRegistrationNotifier:
+    def __init__(self):
+        self.observers = []
+
+    def register(self, observer):
+        self.observers.append(observer)
+
+    def notify(self, user_data):
+        for observer in self.observers:
+            observer.on_user_created(user_data)
+
+
+# Abstracciones para el acceso a la base de datos. 
+# Estas funciones ahora actúan como interfaces. 
+
+def get_db():
+    #MongoDB server client conection
+    client = MongoClient("mongodb+srv://AgroMerc:AgroMerc2023@cluster0.5elomeg.mongodb.net")
+    #Database
+    return client["AgroMerc"]
+
+def get_collection(name):
+    return get_db()[name]
+
+def get_col_clients():
+    return get_collection("Clientes")
+
+def get_col_products():
+    return get_collection("Productos")
+
+def get_col_purchases():
+    return get_collection("Compras")
+
+def get_col_car():
+    return get_collection("BuyerCar")
 
 # User
 userOnline = {}
@@ -35,18 +90,26 @@ def signIn(request):
         userName=str(request.POST['userName'])
         password=str(request.POST['password'])
         # verify if user exist and the password is correct
-        for users in colClients.find():
-            if (userName==users['userName'] or userName == users['email']):
-                exist=True
-                #verify password
-                if(password == users['password']):
-                    #sign In succesfully
-                    correctPassword=True
-                    inSignIn=True
-                    userActive(users)
-                    break
-    context={"existAccount":exist, "correctPassword":correctPassword,
-             "inSignIn":inSignIn,"trySignIn":trySignIn}
+        
+        # Devuelve la colección de clientes de la base de datos
+        colClients = get_col_clients()
+
+        # Busca un usuario en la base de datos y verifica que su campo de username sea igual al ingresado o que el campo email sea igual al username.
+        user = colClients.find_one({"$or": [{"userName": userName}, {"email": userName}]}) #El operador "$or" devuelve documentos que cumplen al menos una de las condiciones especificadas en la lista.
+
+        if user:
+            exist = True
+            if password == user['password']:
+                correctPassword = True
+                inSignIn = True
+                userActive(user)
+
+    context={"existAccount":exist, 
+             "correctPassword":correctPassword,
+             "inSignIn":inSignIn,
+             "trySignIn":trySignIn
+    }
+    
     return render(request,'signIn.html',context)
         
                 
@@ -97,27 +160,49 @@ def signUp(request):
             textPassword="Por favor ingrese una contraseña"
             dataError=True
         if not dataError:
-            for client in colClients.find():
-                if client['userName'] == userName:
-                    existUserName=True
-                if client['cedula'] == cedula:
-                    existCedula=True
-                if client['email'] == email:
-                    existEmail=True
-            if(not existUserName and not existCedula and not existEmail ):
+            colClients = get_col_clients()
+            existing = colClients.find_one({
+                "$or": [
+                    {"userName": userName},
+                    {"cedula": cedula},
+                    {"email": email}
+                ]
+            })
+
+            if existing:
+                if existing['userName'] == userName:
+                    existUserName = True
+                    textUserName = f"El usuario {userName} ya existe, intente uno diferente"
+                if existing['cedula'] == cedula:
+                    existCedula = True
+                    textCedula = "La cédula ya se encuentra registrada"
+                if existing['email'] == email:
+                    existEmail = True
+                    textEmail = f"El correo electrónico {email} ya se encuentra registrado"
+
+            else:
+                # Registro exitoso
                 registered = True
-                #save data in database
-                data={"name":name,"surnames":surnames,"cedula":cedula,
-                    "phoneNumber":phoneNumber,"email":email,
-                    "userName":userName,"password":password,
-                    "userType":userType}
-                colClients.insert_one(data)
-            if(existUserName):
-                textUserName="El usuario "+userName+ " ya existe, intente uno diferente"
-            if(existCedula):
-                textCedula="La cédula ya se encuentra registrada"
-            if(existEmail):
-                textEmail="El correo electrónico "+email+" ya se encuentra registrado"
+                user_data = {
+                    "name": name,
+                    "surnames": surnames,
+                    "cedula": cedula,
+                    "phoneNumber": phoneNumber,
+                    "email": email,
+                    "userName": userName,
+                    "password": password,
+                    "userType": userType
+                }
+                inserted = colClients.insert_one(user_data)
+
+                request.session['user_id'] = str(inserted.inserted_id)
+
+                notifier = UserRegistrationNotifier()
+                notifier.register(EmailBienvenida())
+                notifier.register(UserRegistro())
+                notifier.notify(user_data)
+
+
     context={"textName":textName,"textSurName":textSurname,"textCedula":textCedula,"textEmail":textEmail,
              "textPhoneNumber":textPhoneNumber,"textUserName":textUserName,"textPassword":textPassword,
              "existUserName":existUserName,"existCedula":existCedula,"existEmail":existEmail,
@@ -131,6 +216,7 @@ def agroMerc(request):
 def mainMenu(request):
     global userOnline
     user=userOnline
+    colProducts = get_col_products()
     productsListName = list(colProducts.find())
     seller = False
     #verify if is seller
@@ -157,6 +243,7 @@ def mainMenu(request):
 def purchase(request):
     global userOnline
     user = userOnline
+    colCar = get_col_car()
     if request.method == 'POST':
         action = request.POST.get('action')
         productId = request.POST.get('product_id')
@@ -231,6 +318,7 @@ def madeAPurchase(request):
     user = userOnline
     purchaseMade = False
     purchaseCancel = False
+    colCar = get_col_car()
 
     if request.method == 'POST':
         status = request.POST.get('purchaseStatus')
@@ -302,6 +390,7 @@ def about(request):
 def addProduct(request):
     global userOnline
     user=userOnline
+    colProducts = get_col_products()    
     productAdded=False
     if request.method=='POST':
         productAdded=True
@@ -327,6 +416,7 @@ def addProduct(request):
 def myProducts(request):
     global userOnline
     user = userOnline
+    colProducts = get_col_products()
     myProductsList=[]
     if request.method=='POST':
         action = request.POST.get('action')
@@ -377,26 +467,32 @@ def userActive(user):
     userOnline = user
     
 def searchProduct(id,id2):
+    colProducts = get_col_products()
     product=colProducts.find({"id":id,"id2":id2})
     return(product[0])
 
 def searchSeller(cedula):
+    colClients = get_col_clients()
     search=colClients.find({"cedula":cedula})
     for seller in search:
         return seller
     
 def searchCar(idBuyer):
+    colCar = get_col_car()
     search = colCar.find({'idBuyer':idBuyer})
     return search
     
 def possiblePurchase(id2,newValue,idSeller):
+    colProducts = get_col_products()
     colProducts.update_one({"id":idSeller,"id2":id2},{"$set":{"maxQuantity":newValue}})
     
 def addPurchase(data):
+    colPurchases = get_col_purchases()
     colPurchases.insert_one(data)
     
 def id2(id):
     id2Value=0
+    colProducts = get_col_products()
     for product in colProducts.find({"id":id}):
         id2Value=product['id2']
     id2Value=str(int(id2Value)+1)
@@ -435,6 +531,7 @@ def addCategories(productName):
 def handleCarAction(request):
     global userOnline
     user = userOnline
+    colCar = get_col_car()
     
     if request.method == 'POST':
         action = request.POST.get('action')
