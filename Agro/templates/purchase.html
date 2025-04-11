@@ -14,6 +14,13 @@
     <div class="row">
         <h1 class="h1 text-center">Ticket</h1>
     </div>
+
+    {% if error %}
+    <div class="alert alert-danger text-center p-3" role="alert">
+        {{ errorMessage }}
+    </div>
+    {% else %}
+
     <div class="md-6">
         <p class="p-4">
             A continuación, le proporcionaremos un enlace para ir directamente al WhatsApp del vendedor o, si lo desea, solamente el número de contacto para realizar la compra del producto que seleccionó.
@@ -31,7 +38,7 @@
     </div>
     <div class="mb-3">
         <a class="btn btn-success me-2" 
-           href="https://wa.me/57{{ seller.PhoneNumber }}?text=Hola,%20deseo%20comprar%20{{ cantidad }}%20{{ producto.unit }}%20de%20{{ producto.Name }}%20{{ producto.specificName }}">
+           href="https://wa.me/57{{ seller.PhoneNumber }}?text=Hola,%20deseo%20comprar%20{{ quantityOrdered }}%20{{ product.unit }}%20de%20{{ product.name }}%20{{ product.specificName }}">
             WhatsApp
         </a>
         <a class="btn btn-success" 
@@ -45,16 +52,19 @@
             {% csrf_token %}
             <div class="mb-2">
                 <label class="form-check-label">
-                    <input type="checkbox" 
-                           name="purchaseMade_{{ quantityOrdered }}_{{ product.id2 }}_{{ seller.cedula }}" 
-                           id="purchaseMade_{{ quantityOrdered }}_{{ product.id2 }}_{{ seller.cedula }}" 
-                           class="form-check-input" /> 
+                    <input type="radio" 
+                           name="purchaseStatus" 
+                           value="yes"
+                           class="form-check-input" required> 
                     Sí
                 </label>
             </div>
             <div class="mb-2">
                 <label class="form-check-label">
-                    <input type="checkbox" name="no" id="no" class="form-check-input" /> 
+                    <input type="radio" 
+                           name="purchaseStatus" 
+                           value="no"
+                           class="form-check-input" required> 
                     No
                 </label>
             </div>
@@ -63,5 +73,6 @@
             </button>
         </form>
     </div>
+    {% endif %}
 </div>
 {% endblock content %}

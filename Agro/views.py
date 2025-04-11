@@ -155,56 +155,124 @@ def mainMenu(request):
     return render(request,'mainMenu.html',context)
 
 def purchase(request):
-    purchaseMade=False
     global userOnline
-    user=userOnline
-    if request.method=='POST':
+    user = userOnline
+    if request.method == 'POST':
         action = request.POST.get('action')
-        productId=request.POST.get('product_id')
-        productId2=request.POST.get('product_id2')
-        product=searchProduct(productId,productId2)
-        seller=searchSeller(str(productId))
+        productId = request.POST.get('product_id')
+        productId2 = request.POST.get('product_id2')
+        product = searchProduct(productId, productId2)
+        seller = searchSeller(str(productId))
         try:
-            quantityOrdered=int(request.POST.get('quantityOrdered'))
-            if action=='addToCar':
-                data={'nameProduct':product['name'],'productSpecificName':product['specificName'],
-                      'productId2':product['id2'], 'nameSeller':product['seller'], 
-                      'idBuyer':user['cedula'],'idSeller':seller['cedula'],
-                      'quantityOrdered':quantityOrdered}
-                print(data)
+            quantityOrdered = int(request.POST.get('quantityOrdered'))
+            available_quantity = int(product['maxQuantity'])
+
+            # Validar cantidad ANTES de cualquier acción
+            min_quantity = int(product['minQuantity'])
+
+            if quantityOrdered < min_quantity or quantityOrdered > available_quantity:
+                context = {
+                    "product": product,
+                    "quantityOrdered": quantityOrdered,
+                    "user": user,
+                    "seller": seller,
+                    "error": True,
+                    "errorMessage": f"La cantidad debe estar entre {min_quantity} y {available_quantity}."
+                }
+                return render(request, 'purchase.html', context)
+            
+            
+            if quantityOrdered > available_quantity:
+                context = {
+                    "product": product,
+                    "quantityOrdered": quantityOrdered,
+                    "user": user,
+                    "seller": seller,
+                    "error": True,
+                    "errorMessage": f"La cantidad solicitada ({quantityOrdered}) excede el límite ({available_quantity})."
+                }
+                return render(request, 'purchase.html', context)
+
+            # Solo si la cantidad es válida, proceder:
+            if action == 'addToCar':
+                data = {
+                    'nameProduct': product['name'],
+                    'productSpecificName': product['specificName'],
+                    'productId2': product['id2'],
+                    'nameSeller': product['seller'],
+                    'idBuyer': user['cedula'],
+                    'idSeller': seller['cedula'],
+                    'quantityOrdered': quantityOrdered
+                }
                 colCar.insert_one(data)
                 return redirect('mainMenu')
-            if action=='purchase':
-                context={"buyed":purchaseMade,"product":product,
-                        "quantityOrdered":quantityOrdered,"user":user,"seller":seller}
-                return render(request,'purchase.html',context)
+
+            elif action == 'purchase':
+                context = {
+                    "buyed": False,
+                    "product": product,
+                    "quantityOrdered": quantityOrdered,
+                    "user": user,
+                    "seller": seller,
+                    "error": False
+                }
+                return render(request, 'purchase.html', context)
+
         except ValueError:
-                print("Value Error")
-                return redirect('mainMenu')
-    context={"purchaseMade":purchaseMade}
-    return render(request,'purchase.html',context)
+            print("Value Error")
+            return redirect('mainMenu')
+
+    # Si no hay POST, render por defecto
+    return render(request, 'purchase.html', {"purchaseMade": False})
+
 
 def madeAPurchase(request):
     global userOnline
-    user=userOnline
-    purchaseMade=False
-    purchaseCancel=False
-    if request.method=='POST':
-        for key, value in request.POST.items():
-            print(value)
-            if key.startswith('purchaseMade_'):
-                purchaseMade=True
-                values=key.split('_')
-                quantityOrdered=int(values[1])
-                product=searchProduct(values[3],values[2])
-                seller=searchSeller(values[3])
-                data={"seller":seller['name'],"sellerCedula":product['id'],"productName":product['name']+" "+product['specificName'],"id2Product":product['id2'],"buyer":user['name']+" "+user['surnames'],"quantitySold":quantityOrdered}
-                possiblePurchase(product['id2'],str(int(product['maxQuantity'])-quantityOrdered),seller['cedula'])
+    user = userOnline
+    purchaseMade = False
+    purchaseCancel = False
+
+    if request.method == 'POST':
+        status = request.POST.get('purchaseStatus')
+        if status == 'yes':
+            purchaseMade = True
+            # Obtener todos los productos en el carrito del usuario
+            carItems = list(colCar.find({'idBuyer': user['cedula']}))
+            for item in carItems:
+                quantityOrdered = int(item['quantityOrdered'])
+                product = searchProduct(item['idSeller'], item['productId2'])
+                seller = searchSeller(item['idSeller'])
+
+                data = {
+                    "seller": seller['name'],
+                    "sellerCedula": product['id'],
+                    "productName": product['name'] + " " + product['specificName'],
+                    "id2Product": product['id2'],
+                    "buyer": user['name'] + " " + user['surnames'],
+                    "quantitySold": quantityOrdered
+                }
+
+                # Actualizar stock y registrar compra
+                possiblePurchase(
+                    product['id2'],
+                    str(int(product['maxQuantity']) - quantityOrdered),
+                    seller['cedula']
+                )
                 addPurchase(data)
-            else:
-                purchaseCancel=True
-    context={"purchaseMade":purchaseMade,"purchaseCancel":purchaseCancel}             
-    return render(request,'purchaseMade.html',context)
+
+            # ✅ Vaciar carrito de este usuario
+            colCar.delete_many({'idBuyer': user['cedula']})
+
+        elif status == 'no':
+            purchaseCancel = True
+
+    context = {
+        "purchaseMade": purchaseMade,
+        "purchaseCancel": purchaseCancel
+    }
+    return render(request, 'purchaseMade.html', context)
+
+
     
 def home(request):
     search_term = request.GET.get('searchProduct', '')
@@ -364,3 +432,41 @@ def addCategories(productName):
             categories=category[productName]
             return categories
     
+def handleCarAction(request):
+    global userOnline
+    user = userOnline
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'purchase':
+            # Procesar la compra
+            carItems = list(colCar.find({'idBuyer': user['cedula']}))
+            for item in carItems:
+                product = searchProduct(item['idSeller'], item['productId2'])
+                seller = searchSeller(item['idSeller'])
+                
+                data = {
+                    "seller": seller['name'],
+                    "sellerCedula": product['id'],
+                    "productName": product['name'] + " " + product['specificName'],
+                    "id2Product": product['id2'],
+                    "buyer": user['name'] + " " + user['surnames'],
+                    "quantitySold": item['quantityOrdered']
+                }
+                
+                # Actualizar stock
+                possiblePurchase(
+                    product['id2'],
+                    str(int(product['maxQuantity']) - int(item['quantityOrdered'])),
+                    seller['cedula']
+                )
+                # Registrar compra
+                addPurchase(data)
+        
+        # Vaciar el carrito en ambos casos (compra o cancelación)
+        colCar.delete_many({'idBuyer': user['cedula']})
+        
+        return redirect('mainMenu')
+    
+    return redirect('buyerCar')

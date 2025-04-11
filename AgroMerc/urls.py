@@ -33,6 +33,7 @@ urlpatterns = [
     path('addProduct',AgroViews.addProduct,name='addProduct'),
     path('myProducts',AgroViews.myProducts,name='myProducts'),
     path('buyercar',AgroViews.buyerCar,name='buyerCar'),
+    path('handle-car-action/', AgroViews.handleCarAction, name='handleCarAction'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
