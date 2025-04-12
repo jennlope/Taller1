@@ -1,23 +1,23 @@
+# MongoDB library
 #MongoDB library
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 
 from django.shortcuts import render,redirect
 
+#Singleton
+from .singleton import MongoConnectionSingleton
+from .db import get_col_clients, get_col_products, get_col_purchases, get_col_car
 
-
-
-#MongoDB server client conection
-client = MongoClient("mongodb+srv://AgroMerc:AgroMerc2023@cluster0.5elomeg.mongodb.net")
-
+#Actividad 5 - Singleton 1/2
 #Database
-db = client["AgroMerc"]
+db = MongoConnectionSingleton().get_db()
 
 #Collections
-colClients=db['Clientes']
-colProducts = db['Productos']
-colPurchases = db['Compras']
-colCar=db['BuyerCar']
+colClients = get_col_clients()
+colProducts = get_col_products()
+colPurchases = get_col_purchases()
+colCar = get_col_car()
 
 # User
 userOnline = {}
