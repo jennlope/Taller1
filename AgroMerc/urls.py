@@ -16,24 +16,24 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from Agro import views as AgroViews
+from Agro.views import (SignInView, SignUpView, AgroMercView, MainMenuView, PurchaseView, MadeAPurchaseView, AddProductView, MyProductsView, BuyerCarView, AboutView, HandleCarActionView)
 
 from django.conf.urls.static import static
 from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', AgroViews.signIn,name='signIn'),
-    path('signUp',AgroViews.signUp,name='signUp'),
-    path('agroMerc',AgroViews.agroMerc,name='agroMerc'),
-    path('mainMenu',AgroViews.mainMenu,name='mainMenu'),
-    path('purchase',AgroViews.purchase,name='purchase'),
-    path('madeAPurchase',AgroViews.madeAPurchase,name='madeAPurchase'),
-    path('about', AgroViews.about),
-    path('addProduct',AgroViews.addProduct,name='addProduct'),
-    path('myProducts',AgroViews.myProducts,name='myProducts'),
-    path('buyercar',AgroViews.buyerCar,name='buyerCar'),
-    path('handle-car-action/', AgroViews.handleCarAction, name='handleCarAction'),
+    path('', SignInView.as_view(), name='signIn'),
+    path('signUp', SignUpView.as_view(), name='signUp'),
+    path('agroMerc', AgroMercView.as_view(), name='agroMerc'),
+    path('mainMenu', MainMenuView.as_view(), name='mainMenu'),
+    path('purchase', PurchaseView.as_view(), name='purchase'),
+    path('madeAPurchase', MadeAPurchaseView.as_view(), name='madeAPurchase'),
+    path('about', AboutView.as_view(), name='about'),
+    path('addProduct', AddProductView.as_view(), name='addProduct'),
+    path('myProducts', MyProductsView.as_view(), name='myProducts'),
+    path('buyercar', BuyerCarView.as_view(), name='buyerCar'),
+    path('handle-car-action/', HandleCarActionView.as_view(), name='handleCarAction'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,25 +1,28 @@
-from pymongo import MongoClient
-from bson.objectid import ObjectId
+from django.views import View
+from django.views.generic import TemplateView
 from django.shortcuts import render, redirect
+from bson.objectid import ObjectId
 from .singleton import MongoConnectionSingleton
 from .db import get_col_clients, get_col_products, get_col_purchases, get_col_car
 from .registro import RegistroConMongo, SignInMongo
 from .models import Agro
 
-# Colecciones Mongo
 colClients = get_col_clients()
 colProducts = get_col_products()
 colPurchases = get_col_purchases()
 colCar = get_col_car()
 
-def signIn(request):
-    context = {
-        "existAccount": False,
-        "correctPassword": False,
-        "inSignIn": False,
-    }
+# Actividad 5 - CBV
+# CBV - Sign In
+class SignInView(View):
+    def get(self, request):
+        return render(request, 'signIn.html', {
+            "existAccount": False,
+            "correctPassword": False,
+            "inSignIn": False,
+        })
 
-    if request.method == 'POST':
+    def post(self, request):
         userName = request.POST.get('userName')
         password = request.POST.get('password')
 
@@ -27,77 +30,81 @@ def signIn(request):
         resultado = autenticador.autenticar(userName, password)
 
         if resultado.get("inSignIn"):
-            request.session['user'] = resultado["user"]
+            user = resultado["user"]
+            user["_id"] = str(user["_id"])
+            request.session['user'] = user
 
-        context.update(resultado)
-        context["trySignIn"] = True
-        context["userName"] = userName
+        resultado["trySignIn"] = True
+        resultado["userName"] = userName
+        return render(request, 'signIn.html', resultado)
 
-    return render(request, 'signIn.html', context)
+# CBV - Sign Up
+class SignUpView(View):
+    def get(self, request):
+        return render(request, 'signUp.html', {})
 
-def signUp(request):
-    context = {}
-    if request.method == 'POST':
-        data = {
-            "name": request.POST.get("name"),
-            "surnames": request.POST.get("surnames"),
-            "cedula": request.POST.get("cedula"),
-            "phoneNumber": request.POST.get("phoneNumber"),
-            "email": request.POST.get("email"),
-            "userName": request.POST.get("userName"),
-            "password": request.POST.get("password"),
-            "userType": request.POST.get("userType")
-        }
+    def post(self, request):
+        data = {key: request.POST.get(key) for key in [
+            "name", "surnames", "cedula", "phoneNumber",
+            "email", "userName", "password", "userType"]}
 
         registro = RegistroConMongo()
         resultado = registro.registrar(data)
-        context.update(resultado)
-        context.update(data)
+        resultado.update(data)
+        return render(request, 'signUp.html', resultado)
 
-    return render(request, 'signUp.html', context)
+# CBV - AgroMerc
+class AgroMercView(TemplateView):
+    template_name = 'AgroMerc.html'
 
-def agroMerc(request):
-    context = {"userActive": False}
-    return render(request, 'AgroMerc.html', context)
+    def get_context_data(self, **kwargs):
+        return {"userActive": False}
 
-def mainMenu(request):
-    user = request.session.get('user')
-    if not user or not isinstance(user, dict) or 'userType' not in user:
-        return redirect('signIn')
+# CBV - Main Menu
+class MainMenuView(View):
+    def get(self, request):
+        user = request.session.get('user')
+        if not user or 'userType' not in user:
+            return redirect('signIn')
 
-    seller = user['userType'] == 'seller'
-    selected_category = request.GET.get('category', None)
+        seller = user['userType'] == 'seller'
+        selected_category = request.GET.get('category')
 
-    if selected_category and selected_category != 'nothing':
-        productsListName = list(colProducts.find({"categories": selected_category}))
-    else:
-        productsListName = list(colProducts.find())
+        if selected_category and selected_category != 'nothing':
+            productsListName = list(colProducts.find({"categories": selected_category}))
+        else:
+            productsListName = list(colProducts.find())
 
-    context = {
-        "name": user['name'],
-        "surnames": user['surnames'],
-        "cedula": user['cedula'],
-        "phoneNumber": user['phoneNumber'],
-        "email": user['email'],
-        "userName": user['userName'],
-        "password": user['password'],
-        "seller": seller,
-        "productsListName": productsListName,
-        "category": selected_category
-    }
-    return render(request, 'mainMenu.html', context)
+        context = {
+            "name": user['name'],
+            "surnames": user['surnames'],
+            "cedula": user['cedula'],
+            "phoneNumber": user['phoneNumber'],
+            "email": user['email'],
+            "userName": user['userName'],
+            "password": user['password'],
+            "seller": seller,
+            "productsListName": productsListName,
+            "category": selected_category
+        }
+        return render(request, 'mainMenu.html', context)
 
-def purchase(request):
-    user = request.session.get('user')
-    if not user:
-        return redirect('signIn')
+# CBV - Purchase
+class PurchaseView(View):
+    def get(self, request):
+        return render(request, 'purchase.html', {"purchaseMade": False})
 
-    if request.method == 'POST':
+    def post(self, request):
+        user = request.session.get('user')
+        if not user:
+            return redirect('signIn')
+
         action = request.POST.get('action')
         productId = request.POST.get('product_id')
         productId2 = request.POST.get('product_id2')
         product = searchProduct(productId, productId2)
         seller = searchSeller(str(productId))
+
         try:
             quantityOrdered = int(request.POST.get('quantityOrdered'))
             available_quantity = int(product['maxQuantity'])
@@ -141,18 +148,17 @@ def purchase(request):
         except ValueError:
             return redirect('mainMenu')
 
-    return render(request, 'purchase.html', {"purchaseMade": False})
+# CBV - Made a Purchase
+class MadeAPurchaseView(View):
+    def post(self, request):
+        user = request.session.get('user')
+        if not user:
+            return redirect('signIn')
 
-def madeAPurchase(request):
-    user = request.session.get('user')
-    if not user:
-        return redirect('signIn')
-
-    purchaseMade = False
-    purchaseCancel = False
-
-    if request.method == 'POST':
+        purchaseMade = False
+        purchaseCancel = False
         status = request.POST.get('purchaseStatus')
+
         if status == 'yes':
             purchaseMade = True
             carItems = list(colCar.find({'idBuyer': user['cedula']}))
@@ -178,19 +184,22 @@ def madeAPurchase(request):
         elif status == 'no':
             purchaseCancel = True
 
-    context = {
-        "purchaseMade": purchaseMade,
-        "purchaseCancel": purchaseCancel
-    }
-    return render(request, 'purchaseMade.html', context)
+        context = {
+            "purchaseMade": purchaseMade,
+            "purchaseCancel": purchaseCancel
+        }
+        return render(request, 'purchaseMade.html', context)
 
-def addProduct(request):
-    user = request.session.get('user')
-    if not user:
-        return redirect('signIn')
+# CBV - Add Product
+class AddProductView(View):
+    def get(self, request):
+        return render(request, 'AddProducts.html', {"productAdded": False})
 
-    productAdded = False
-    if request.method == 'POST':
+    def post(self, request):
+        user = request.session.get('user')
+        if not user:
+            return redirect('signIn')
+
         productName = str(request.POST.get("productName"))
         specificName = str(request.POST["specificName"])
         unit = str(request.POST.get('unit'))
@@ -198,6 +207,7 @@ def addProduct(request):
         minQuantity = str(request.POST['minQuantity'])
         id2v = id2(user['cedula'])
         category = addCategories(productName)
+
         data = {
             "name": productName,
             "specificName": specificName,
@@ -212,18 +222,25 @@ def addProduct(request):
         colProducts.insert_one(data)
         return redirect('mainMenu')
 
-    context = {"productAdded": productAdded}
-    return render(request, 'AddProducts.html', context)
+# CBV - My Products
+class MyProductsView(View):
+    def get(self, request):
+        user = request.session.get('user')
+        if not user:
+            return redirect('signIn')
 
-def myProducts(request):
-    user = request.session.get('user')
-    if not user:
-        return redirect('signIn')
+        myProductsList = []
+        for product in colProducts.find():
+            if product['id'] == user['cedula']:
+                product['product_id'] = str(product['_id'])
+                myProductsList.append(product)
 
-    myProductsList = []
-    if request.method == 'POST':
+        return render(request, 'myProducts.html', {"myProductsList": myProductsList})
+
+    def post(self, request):
         action = request.POST.get('action')
         productId = request.POST.get('product_id')
+
         if action == 'delete':
             colProducts.delete_one({'_id': ObjectId(productId)})
             return redirect('myProducts')
@@ -245,58 +262,27 @@ def myProducts(request):
             colProducts.update_one({'_id': ObjectId(productId)}, {'$set': updatedData})
             return redirect('myProducts')
 
-    for product in colProducts.find():
-        if product['id'] == user['cedula']:
-            product['product_id'] = str(product['_id'])
-            myProductsList.append(product)
+# CBV - BuyerCar
+class BuyerCarView(View):
+    def get(self, request):
+        user = request.session.get('user')
+        if not user:
+            return redirect('signIn')
 
-    context = {"myProductsList": myProductsList}
-    return render(request, 'myProducts.html', context)
+        products = colCar.find({'idBuyer': user['cedula']})
+        return render(request, 'buyercar.html', {'products': products})
 
-def buyerCar(request):
-    user = request.session.get('user')
-    if not user:
-        return redirect('signIn')
+# CBV - About
+class AboutView(TemplateView):
+    template_name = 'about.html'
 
-    products = searchCar(user['cedula'])
-    context = {'products': products}
-    return render(request, 'buyercar.html', context)
+# CBV - HandleCarAction
+class HandleCarActionView(View):
+    def post(self, request):
+        user = request.session.get('user')
+        if not user:
+            return redirect('signIn')
 
-def searchProduct(id, id2):
-    product = colProducts.find({"id": id, "id2": id2})
-    return product[0]
-
-def searchSeller(cedula):
-    search = colClients.find({"cedula": cedula})
-    for seller in search:
-        return seller
-
-def searchCar(idBuyer):
-    search = colCar.find({'idBuyer': idBuyer})
-    return search
-
-def possiblePurchase(id2, newValue, idSeller):
-    colProducts.update_one({"id": idSeller, "id2": id2}, {"$set": {"maxQuantity": newValue}})
-
-def addPurchase(data):
-    colPurchases.insert_one(data)
-
-def id2(id):
-    id2Value = 0
-    for product in colProducts.find({"id": id}):
-        id2Value = product['id2']
-    id2Value = str(int(id2Value) + 1)
-    return id2Value
-
-def about(request):
-    return render(request, 'about.html')
-
-def handleCarAction(request):
-    user = request.session.get('user')
-    if not user:
-        return redirect('signIn')
-
-    if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'purchase':
             carItems = list(colCar.find({'idBuyer': user['cedula']}))
@@ -320,12 +306,30 @@ def handleCarAction(request):
                 )
                 addPurchase(data)
 
-        # Vaciar carrito siempre
         colCar.delete_many({'idBuyer': user['cedula']})
-
         return redirect('mainMenu')
 
-    return redirect('buyerCar')
+    def get(self, request):
+        return redirect('buyerCar')
+
+#Aux
+def searchProduct(id, id2):
+    return colProducts.find_one({"id": id, "id2": id2})
+
+def searchSeller(cedula):
+    return colClients.find_one({"cedula": cedula})
+
+def addPurchase(data):
+    colPurchases.insert_one(data)
+
+def possiblePurchase(id2, newValue, idSeller):
+    colProducts.update_one({"id": idSeller, "id2": id2}, {"$set": {"maxQuantity": newValue}})
+
+def id2(id):
+    id2Value = 0
+    for product in colProducts.find({"id": id}):
+        id2Value = product['id2']
+    return str(int(id2Value) + 1)
 
 def addCategories(productName):
     category = {
@@ -353,5 +357,4 @@ def addCategories(productName):
         'Yuca': ['Hortalizas', 'Tubérculos', 'Fuentes de fibra'],
         'Zanahoria': ['Hortalizas', 'Tubérculos', 'Fuentes de fibra']
     }
-    if productName in category:
-        return category[productName]
+    return category.get(productName, [])
