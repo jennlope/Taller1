@@ -15,75 +15,80 @@
   <!-- Form -->
   <form method="post" class="form-control p-4 shadow rounded-3">
     {% csrf_token %}
+    {% if error %}
+    <div class="alert alert-danger">
+      Ha ocurrido un error al registrar el usuario. Revisa los campos.
+    </div>
+    {% endif %}
     <div class="row g-3">
       <div class="col-md-6">
         <label for="name" class="form-label">Nombres completos</label>
-        <input type="text" name="name" id="name" class="form-control" placeholder="Ingrese sus nombres">
-        {% if textName != "" and trySignUp %}
+        <input type="text" name="name" id="name" class="form-control" placeholder="Ingrese sus nombres" value="{{ name }}">
+        {% if errores.name %}
         <div class="alert alert-danger mt-2">
-          <p>{{ textName }}</p>
+          <p>{{ errores.name }}</p>
         </div>
         {% endif %}
       </div>
       <div class="col-md-6">
         <label for="surnames" class="form-label">Apellidos completos</label>
-        <input type="text" name="surnames" id="surnames" class="form-control" placeholder="Ingrese sus apellidos">
-        {% if textSurName != ""  and trySignUp %}
+        <input type="text" name="surnames" id="surnames" class="form-control" placeholder="Ingrese sus apellidos" value="{{ surnames }}">
+        {% if errores.surnames %}
         <div class="alert alert-danger mt-2">
-          <p>{{ textSurName }}</p>
+          <p>{{ errores.surnames }}</p>
         </div>
         {% endif %}
       </div>
       <div class="col-md-6">
         <label for="cedula" class="form-label">Número de Cédula</label>
-        <input type="text" name="cedula" id="cedula" class="form-control" placeholder="Ingrese su número de cédula">
-        {% if existCedula or textCedula != "" and trySignUp %}
+        <input type="text" name="cedula" id="cedula" class="form-control" placeholder="Ingrese su número de cédula" value="{{ cedula }}">
+        {% if errores.cedula %}
         <div class="alert alert-danger mt-2">
-          <p>{{ textCedula }}</p>
+          <p>{{ errores.cedula }}</p>
         </div>
         {% endif %}
       </div>
       <div class="col-md-6">
         <label for="phoneNumber" class="form-label">Número de celular</label>
-        <input type="text" name="phoneNumber" id="phoneNumber" class="form-control" placeholder="Ingrese su número de celular">
-        {% if textPhoneNumber != "" and trySignUp %}
+        <input type="text" name="phoneNumber" id="phoneNumber" class="form-control" placeholder="Ingrese su número de celular" value="{{ phoneNumber }}">
+        {% if errores.phoneNumber %}
         <div class="alert alert-danger mt-2">
-          <p>{{ textPhoneNumber }}</p>
+          <p>{{ errores.phoneNumber }}</p>
         </div>
         {% endif %}
       </div>
       <div class="col-md-6">
         <label for="email" class="form-label">Correo electrónico</label>
-        <input type="email" name="email" id="email" class="form-control" placeholder="example@example.com">
-        {% if existEmail or textEmail != "" and trySignUp %}
+        <input type="email" name="email" id="email" class="form-control" placeholder="example@example.com" value="{{ email }}">
+        {% if errores.email %}
         <div class="alert alert-danger mt-2">
-          <p>{{ textEmail }}</p>
+          <p>{{ errores.email }}</p>
         </div>
         {% endif %}
       </div>
       <div class="col-md-6">
         <label for="userName" class="form-label">Nombre de usuario</label>
-        <input type="text" name="userName" id="userName" class="form-control" placeholder="Ingrese su nombre de usuario">
-        {% if existUserName or textUserName != "" and trySignUp%}
+        <input type="text" name="userName" id="userName" class="form-control" placeholder="Ingrese su nombre de usuario" value="{{ userName }}">
+        {% if errores.userName %}
         <div class="alert alert-danger mt-2">
-          <p>{{ textUserName }}</p>
+          <p>{{ errores.userName }}</p>
         </div>
         {% endif %}
       </div>
       <div class="col-md-6">
         <label for="password" class="form-label">Contraseña</label>
         <input type="password" name="password" id="password" class="form-control" placeholder="Ingrese su contraseña">
-        {% if textPassword != ""  and trySignUp %}
+        {% if errores.password %}
         <div class="alert alert-danger mt-2">
-          <p>{{ textPassword }}</p>
+          <p>{{ errores.password }}</p>
         </div>
         {% endif %}
       </div>
       <div class="col-md-6">
         <label for="userType" class="form-label">Tipo de Usuario</label>
         <select name="userType" id="userType" class="form-select" aria-label="Tipo de usuario">
-          <option value="buyer" selected>Comprador</option>
-          <option value="seller">Vendedor</option>
+          <option value="buyer" {% if userType == "buyer" %}selected{% endif %}>Comprador</option>
+          <option value="seller" {% if userType == "seller" %}selected{% endif %}>Vendedor</option>
         </select>
       </div>
       <div class="col-12 text-center">
@@ -99,5 +104,4 @@
   <a href="{% url 'signIn' %}" class="btn btn-light mt-4">Iniciar sesión</a>
 </div>
 {% endif %}
-
 {% endblock content %}

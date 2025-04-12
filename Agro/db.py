@@ -1,9 +1,9 @@
 from .singleton import MongoConnectionSingleton
 
-# Obtener instancia única de la base de datos
+#Instancia unica de la bd
 db = MongoConnectionSingleton().get_db()
 
-# Funciones para acceder a cada colección
+# Colections
 def get_col_clients():
     return db["Clientes"]
 

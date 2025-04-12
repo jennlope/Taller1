@@ -9,6 +9,9 @@ from django.shortcuts import render,redirect
 from .singleton import MongoConnectionSingleton
 from .db import get_col_clients, get_col_products, get_col_purchases, get_col_car
 
+#Template Method
+from .registro import RegistroConMongo
+
 #Actividad 5 - Singleton 1/2
 #Database
 db = MongoConnectionSingleton().get_db()
@@ -51,78 +54,27 @@ def signIn(request):
         
                 
 def signUp(request):
-    #boolean data
-    existCedula=False
-    existEmail=False
-    existUserName=False
-    registered=False
-    dataError=False
-    textName=""
-    textSurname=""
-    textCedula=""
-    textPhoneNumber=""
-    textEmail=""
-    textUserName=""
-    textPassword=""
-    trySignUp=False
+    context = {}
     if request.method == 'POST':
-        trySignUp=True
-        name=str(request.POST['name'])
-        surnames=str(request.POST['surnames'])
-        cedula=str(request.POST['cedula'])
-        phoneNumber=str(request.POST['phoneNumber'])
-        email=str(request.POST['email'])
-        userName=str(request.POST['userName'])
-        password=str(request.POST['password'])
-        userType=str(request.POST.get('userType'))
-        if name == "":
-            textName="Por favor ingrese su nombre"
-            dataError=True
-        if surnames == "":
-            textSurname="Por favor ingrese su(s) Apellido(s)"
-            dataError=True
-        if cedula == "":
-            textCedula="Por favor ingrese su cédula"
-            dataError=True
-        if phoneNumber=="":
-            textPhoneNumber="Por favor ingrese su número de teléfono"
-            dataError=True
-        if email=="":
-            textEmail="Por favor ingrese su correo electrónico"
-            dataError=True
-        if userName=="":
-            textUserName="Por favor ingrese su nombre de usuario"
-            dataError=True
-        if password=="":
-            textPassword="Por favor ingrese una contraseña"
-            dataError=True
-        if not dataError:
-            for client in colClients.find():
-                if client['userName'] == userName:
-                    existUserName=True
-                if client['cedula'] == cedula:
-                    existCedula=True
-                if client['email'] == email:
-                    existEmail=True
-            if(not existUserName and not existCedula and not existEmail ):
-                registered = True
-                #save data in database
-                data={"name":name,"surnames":surnames,"cedula":cedula,
-                    "phoneNumber":phoneNumber,"email":email,
-                    "userName":userName,"password":password,
-                    "userType":userType}
-                colClients.insert_one(data)
-            if(existUserName):
-                textUserName="El usuario "+userName+ " ya existe, intente uno diferente"
-            if(existCedula):
-                textCedula="La cédula ya se encuentra registrada"
-            if(existEmail):
-                textEmail="El correo electrónico "+email+" ya se encuentra registrado"
-    context={"textName":textName,"textSurName":textSurname,"textCedula":textCedula,"textEmail":textEmail,
-             "textPhoneNumber":textPhoneNumber,"textUserName":textUserName,"textPassword":textPassword,
-             "existUserName":existUserName,"existCedula":existCedula,"existEmail":existEmail,
-             "registered":registered,"trySignUp":trySignUp}
-    return render(request,'signUp.html',context) #verificar para no montar nada en blanco
+        # Data
+        data = {
+            "name": request.POST.get("name"),
+            "surnames": request.POST.get("surnames"),
+            "cedula": request.POST.get("cedula"),
+            "phoneNumber": request.POST.get("phoneNumber"),
+            "email": request.POST.get("email"),
+            "userName": request.POST.get("userName"),
+            "password": request.POST.get("password"),
+            "userType": request.POST.get("userType")
+        }
+
+        # Plantilla
+        registro = RegistroConMongo()
+        resultado = registro.registrar(data)
+        context.update(resultado)
+        context.update(data)  # Para mantener los campos llenos si hubo error
+
+    return render(request, 'signUp.html', context)
 
 def agroMerc(request):
     context={"userActive":False}
