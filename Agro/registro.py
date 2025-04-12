@@ -63,3 +63,49 @@ class RegistroConMongo(RegistroUsuarioTemplate):
                 "cedula": "La cédula ya está registrada"
             }
         }
+
+class SignInTemplate:
+    def autenticar(self, userName, password):
+        user = self.buscar_usuario(userName)
+        if not user:
+            return self.on_user_not_found()
+
+        if not self.validar_password(user, password):
+            return self.on_password_incorrecta()
+
+        self.registrar_usuario(user)
+        return self.on_success(user)
+
+    def buscar_usuario(self, userName): raise NotImplementedError
+    def validar_password(self, user, password): raise NotImplementedError
+    def registrar_usuario(self, user): pass  # opcional
+    def on_user_not_found(self): return {"existAccount": False, "correctPassword": False, "inSignIn": False}
+    def on_password_incorrecta(self): return {"existAccount": True, "correctPassword": False, "inSignIn": False}
+    def on_success(self, user): return {"existAccount": True, "correctPassword": True, "inSignIn": True, "user": user}
+
+
+colClients = get_col_clients()
+userOnline = {}  # solo si no estás usando request.session aún
+
+class SignInMongo(SignInTemplate):
+    def buscar_usuario(self, userName):
+        for user in colClients.find():
+            if userName == user['userName'] or userName == user['email']:
+                return user
+        return None
+
+    def validar_password(self, user, password):
+        return password == user['password']
+
+    def registrar_usuario(self, user):
+        global userOnline
+        userOnline = user  # si luego migras a session, aquí lo puedes cambiar
+
+    def on_success(self, user):
+        user["_id"] = str(user["_id"])  # Convertir ObjectId
+        return {
+            "existAccount": True,
+            "correctPassword": True,
+            "inSignIn": True,
+            "user": user
+        }

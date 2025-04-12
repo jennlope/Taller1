@@ -10,19 +10,18 @@
 {% endblock buttons %}
 
 {% block content %}
-
-<!-- Conditional not inSignIn -->
-{% if not inSignIn %}
 <div class="container py-5">
+
+    {% if not inSignIn %}
+    <!-- Formulario de inicio de sesión -->
     <form method="post" class="form-control p-4 shadow rounded-3">
         <div class="row">
             {% csrf_token %}
             <div class="col-md-12 mb-3">
-                <label for="userName" class="form-label">Nombre de Usuario o
-                    Correo</label>
-                <input type="text" name="userName" id="userName"
-                    class="form-control"
-                    placeholder="Ingrese su nombre de usuario o correo">
+                <label for="userName" class="form-label">Nombre de Usuario o Correo</label>
+                <input type="text" name="userName" id="userName" class="form-control"
+                    placeholder="Ingrese su nombre de usuario o correo"
+                    value="{{ userName }}">
             </div>
             <div class="col-md-12 mb-3">
                 <label for="password" class="form-label">Contraseña</label>
@@ -30,36 +29,32 @@
                     class="form-control" placeholder="Ingrese su contraseña">
             </div>
             <div class="col-md-12 text-center">
-                <button type="submit"
-                    class="btn btn-primary w-100">Ingresar</button>
+                <button type="submit" class="btn btn-primary w-100">Ingresar</button>
             </div>
         </div>
     </form>
 
-    <!-- Conditional not existAccount and trySignIn -->
+    <!-- Mensaje si el usuario no existe -->
     {% if not existAccount and trySignIn %}
     <div class="alert alert-danger mt-4 text-center">
-        <h3 class="h4">Usuario o Correo no registrado, por favor intente
-            nuevamente o regístrese</h3>
-        <a href="signUp" class="btn btn-dark mt-3">Registrarse</a>
+        <h3 class="h4">Usuario o Correo no registrado, por favor intente nuevamente o regístrese</h3>
+        <a href="{% url 'signUp' %}" class="btn btn-dark mt-3">Registrarse</a>
     </div>
 
-    <!-- Conditional elif not correctPassword and trySignIn -->
+    <!-- Mensaje si la contraseña es incorrecta -->
     {% elif not correctPassword and trySignIn %}
     <div class="alert alert-warning mt-4 text-center">
         <h3 class="h4">Contraseña incorrecta, intente nuevamente</h3>
     </div>
     {% endif %}
-    <!-- End Conditional -->
-
-    <!-- else conditional ingreso -->
+    
     {% else %}
+    <!-- Redirección tras ingreso exitoso -->
     <div class="alert alert-info text-center mt-4">
-        <h2 class="h4">Ingreso exitoso, redireccionando a la página
-            principal...</h2>
+        <h2 class="h4">Ingreso exitoso, redireccionando a la página principal...</h2>
         <meta http-equiv="refresh" content="0; url={% url 'mainMenu' %}">
     </div>
     {% endif %}
-</div>
 
+</div>
 {% endblock content %}
